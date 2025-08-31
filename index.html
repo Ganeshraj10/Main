@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tower of Hanoi - Accurate Visualization</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+    }
+
+    h2 {
+      margin-top: 20px;
+    }
+
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      margin-top: 40px;
+      position: relative;
+    }
+
+    .peg {
+      width: 10px;
+      height: 200px;
+      background-color: #444;
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    .tower {
+      width: 140px;
+      height: 250px;
+      background-color: #ddd;
+      position: relative;
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: center;
+      border-top: 5px solid #888;
+    }
+
+    .disk {
+      height: 20px;
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 4px;
+      transition: all 0.5s ease;
+    }
+
+    button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+
+    .label {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Tower of Hanoi Visualization (Rule-Accurate)</h2>
+
+  <div class="container">
+    <div>
+      <div class="tower" id="A"><div class="peg"></div></div>
+      <div class="label">A</div>
+    </div>
+    <div>
+      <div class="tower" id="B"><div class="peg"></div></div>
+      <div class="label">B</div>
+    </div>
+    <div>
+      <div class="tower" id="C"><div class="peg"></div></div>
+      <div class="label">C</div>
+    </div>
+  </div>
+
+  <button onclick="start()">Start</button>
+
+  <script>
+    const towers = {
+      A: [],
+      B: [],
+      C: []
+    };
+
+    const towerEls = {
+      A: document.getElementById('A'),
+      B: document.getElementById('B'),
+      C: document.getElementById('C')
+    };
+
+    const numDisks = 4;
+    const delay = 500;
+    let diskElements = {};
+
+    function setup() {
+      // Clear towers and visual elements
+      for (let key in towers) {
+        towers[key] = [];
+        towerEls[key].querySelectorAll('.disk').forEach(el => el.remove());
+      }
+
+      // Create disks and push to A
+      for (let i = numDisks; i >= 1; i--) {
+        const disk = document.createElement('div');
+        disk.className = 'disk';
+        disk.style.width = `${40 + i * 20}px`;
+        disk.style.backgroundColor = `hsl(${i * 40}, 70%, 60%)`;
+        disk.dataset.size = i;
+        towerEls.A.appendChild(disk);
+        towers.A.push(i);
+        diskElements[i] = disk;
+        positionDisks('A');
+      }
+    }
+
+    function positionDisks(towerName) {
+      const stack = towers[towerName];
+      for (let i = 0; i < stack.length; i++) {
+        const disk = diskElements[stack[i]];
+        disk.style.bottom = `${i * 22 + 5}px`;
+        towerEls[towerName].appendChild(disk);
+      }
+    }
+
+    async function move(from, to) {
+      const fromStack = towers[from];
+      const toStack = towers[to];
+
+      if (!fromStack.length) return; // invalid move
+
+      const disk = fromStack[fromStack.length - 1];
+
+      // Rule check: don't place bigger disk on smaller
+      if (toStack.length > 0 && disk > toStack[toStack.length - 1]) {
+        console.error(`Illegal move attempted from ${from} to ${to}`);
+        return;
+      }
+
+      fromStack.pop();
+      toStack.push(disk);
+      positionDisks(from);
+      await wait(delay / 2);
+      positionDisks(to);
+      await wait(delay);
+    }
+
+    async function hanoi(n, from, aux, to) {
+      if (n === 0) return;
+      await hanoi(n - 1, from, to, aux);
+      await move(from, to);
+      await hanoi(n - 1, aux, from, to);
+    }
+
+    function wait(ms) {
+      return new Promise(res => setTimeout(res, ms));
+    }
+
+    async function start() {
+      setup();
+      await wait(1000);
+      await hanoi(numDisks, 'A', 'B', 'C');
+    }
+  </script>
+
+</body>
+</html>
